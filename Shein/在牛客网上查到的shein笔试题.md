@@ -1,8 +1,8 @@
 ## 在牛客网上查到的shein笔试题
 
-10道多选题
+10道单选题
 
-5道单选题
+5道多选题
 
 ### SQL
 
@@ -70,15 +70,6 @@ public class niuke {
                 }
             }
         }
-        System.out.println("下面输出hashmap的全部内容");
-        for(Integer key: hashMap.keySet()){
-            System.out.println("长度为"+key+"的每一段滑动窗口有：");
-            List<String> list= hashMap.get(key);
-            for(String sg: list){
-                System.out.println(sg);
-            }
-        }
-        System.out.println("最终结果为：");
         for(String sg: hashMap.get(max)){
             System.out.println(sg);
         }
