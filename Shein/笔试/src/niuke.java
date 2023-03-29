@@ -11,31 +11,42 @@ public class niuke {
         s=scan.nextLine();
         char[] chars=s.toCharArray();
         Set<Character> set=new HashSet<>();
-        hashMap=new HashMap<>();
+        hashMap=new HashMap<>();//hashmap里存的都是不重复的子字符串
         int l=0,r=0;
         int max=1;
         while(l<chars.length&&r<chars.length){
-            int len=r-l;
-            while(r<chars.length){
-                char c=chars[r];
-                if(set.contains(c)){
-                    store(l,r);
-                    //出现了重复字符，那需要把set里重复字符及其之前的字符都删了
-                    for(int i=l;i<r;i++){
-                        set.remove(chars[i]);
-                        if(chars[i]==c){
-                            l=i+1;
-                            break;
-                        }
-                    }
-                    break;
-                }
+            char c=chars[r];
+            if(!set.contains(c)){
                 set.add(c);
                 r++;
-                len++;
+                if(r==chars.length) {//这时候到最后一个字符了，不能再延长了，所以也要把这个给存了
+                    max = Math.max(max, r - l);
+                    store(l, r);
+                }
             }
-            max=Math.max(max,len);
+            else{
+                max=Math.max(max,r-l);
+                store(l,r);
+                //set里存在c，则将重复的那个c及其前面的一段都删除
+                while(true){
+                    set.remove(chars[l]);
+                    if(chars[l]==c){//删掉的这个是c，后面的不用删了
+                        l++;
+                        break;
+                    }
+                    l++;
+                }
+            }
         }
+        System.out.println("下面输出hashmap的全部内容");
+        for(Integer key: hashMap.keySet()){
+            System.out.println("长度为"+key+"的每一段滑动窗口有：");
+            List<String> list= hashMap.get(key);
+            for(String sg: list){
+                System.out.println(sg);
+            }
+        }
+        System.out.println("最终结果为：");
         for(String sg: hashMap.get(max)){
             System.out.println(sg);
         }
