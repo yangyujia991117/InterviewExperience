@@ -8,17 +8,127 @@ mdate: 2023-03-27 11:17:11
 
 #### 2、怎么判断对象死亡，以及对象怎么回收的（还是记不住）
 
+##### 对象死亡判断方法：
+
+在java gc中，在进行回收之前要先判断对象是否死亡，主要有引用计数法和可达性分析算法两种方法。
+
+- **引用计数法**：给对象添加一个引用计数器，每有一个引用计数器就+1，引用失效了计数器就-1，计数器为0了就表示该对象死亡（缺点：会存在对象相互引用导致计数器不可能为0的情况）。
+- **可达性分析算法**：通过一系列的<font color="red">GC Roots对象（如本地方法栈中引用的对象、方法区中类静态属性/常量引用的对象等）</font>作为起点，如果通过引用链无法到达某个对象，那么该对象就可以被回收（但不一定会马上被回收，会再给一次机会，如果第二次机会还是到达不了，那就真的被回收了。
+
+##### 对象回收方法：
+
+- **标记-清除法：**首先标记出<font color="red">不需要清除的对象</font>，之后统一回收<font color="red">所有没有被标记的对象</font>。缺点：会产生很多内存碎片。
+
+- **标记-整理法：**和标记清除法相比不是直接回收掉没标记的对象，而是先<font color="red">把不用回收的对象整理到内存的一侧，之后把这一侧以外的内存都给清理了</font>。好处：不会产生内存碎片。
+
+  - 什么情况下适合用标记-整理法：1.不能浪费太多内存空间（如老年代） 2.标记时存活下来的对象多  
+
+- **标记-复制法：**将内存分为大小相同的两块A、B，交替使用其中一块，每次要清理时A，<font color="red">把A中所有不用清除的对象移到B，然后清理A</font>，下一次用的就是B，清理B的时候同理。
+
+  - 什么情况下适合用标记-复制法：1.每次标记时存活下来的对象少，这样就不用复制那么多过去 2.可以浪费一定的内存空间    
+
+  <font color="red">**新生代使用标记-复制法**</font>（原因：对象的存活率低，可以不用复制那么多过去，而且由于有分配担保机制，可以浪费一定的空间，并且新生代的垃圾回收频繁，标记-复制法较为简单高效）。<font color="red">**老年代使用标记-清除或标记-整理**</font>（原因：标记时存活下来的对象多，如果用标记-复制法那会复制太多对象，效率低，没有额外空间给老年代进行分配担保，所以不能使用标记-复制这种对内存消耗较大的算法）。
+
+
+
 #### 3、要给100G大小的文件里面的数据排序，给出具体的操作过程 （我当时给出了我觉得应该用的排序算法，但他强调具体操作，我当时决定还要怎么具体呀 笑死）
 
 ​     （面试官说要听我的思路，然后从每个流程讲一下，比如数据读到内存，内存不够，那么怎么解决，以及再过程中遇到其他什么问题，要怎么解决，排序用什么）
 
 #### 4、接口与抽象类的区别，讲一个具体的只能用抽象类的场景
 
-#### 5、强引用、弱引用、虚引用
+接口和抽象类的共同点：都不能被实例化、都可以包含抽象方法、都可以包含默认实现的方法（接口中用 default）
+区别：1.接口是对行为的约束，类实现某个接口就具有了对应的行为，抽象类强调的是类的所属关系
+2.一个类可以实现多个接口，但只能继承一个抽象类
+3.接口中的成员变量默认 public static final，不能被修改且必须有初始值；抽象类中的成员变量默认 default，可以被子类重新定义，也可被重新赋值。
+具体的只能用抽象类的场景：抽象类：会飞的鸟，具有方法飞（但飞的具体方式不同），还具有属性羽毛颜色、是否会游泳等。麻雀、天鹅都继承了这个抽象类。
+
+#### 5、强引用、软引用、弱引用、虚引用
+
+在<font color="orange">判断对象死亡的两种主要方法</font>中都使用了“引用”这一概念。
+
+- **强引用**：<font color="red">强引用指向的对象绝对不会被回收</font>，JVM宁可抛出outOfMemoryError使程序异常终止也不回收它。<font color="voilet">我们使用的大部分引用都是强引用，如new对象、声明常量。</font>
+
+  例子：
+
+  ```java
+  Object obj = new Object();
+  String str = "StrongReference";
+  //这两个都是强引用，也就是object和str都不会被回收
+  ```
+
+  取消强引用的方法：把被引用对象设为null，如上面的obj=null，str=null
+
+- **软引用**：<font color="red">JVM GC时，只有内存空间不够时才回收</font>。可以和<font color="orange">引用队列</font>联合使用，如果软引用所引用的对象被回收，JVM会将这个软引用加入到与之关联的引用队列中。<font color="voilet"> 可用来实现内存敏感的高速缓存，如网页缓存、图片缓存。</font>软引用对应的类是<font color="red"> java.lang.ref.SoftReference类</font>。
+
+  例子：
+
+  ```java
+  import java.lang.ref.SoftReference;//软引用必须是这个类的
+   
+  public class SoftRef {  
+   
+      public static void main(String[] args){  
+          Obj obj = new Obj();//这里是强引用          
+          SoftReference<Obj> sr = new SoftReference<Obj>(obj); //创建软引用对象，软引用是sr，引用的对象是obj
+          obj = null;  //删除强引用，使得该对象的回收不受强引用影响
+          System.gc;//调用gc
+          System.out.println(sr.get());  //可以打印出被引用的对象，说明软引用起了作用（使得被引用对象的引用计数＞0）
+      }       
+  }  
+   
+  class Obj{  
+      int[] obj ;  
+      public Obj(){  
+          obj = new int[1000];  
+      }  
+  }
+  ```
+
+- **弱引用**：<font color="red">不管内存足够与否都回收</font>。也可以<font color="orange">联合引用队列</font>使用。弱引用必须是<font color="red"> java.lang.ref.WeakReference类</font> 的。  如果一个对象是偶尔的使用，并且希望在使用时随时就能获取到，但又不想影响此对象的垃圾收集，那就可以用弱引用。<font color="voilet">也可以做缓存，且该缓存生命周期比软引用的短</font>
+
+  例子：
+
+  ```java
+  import java.lang.ref.WeakReference;
+   
+  public class WeakRef {
+      public static void main(String[] args) {
+          WeakReference<String> sr = new WeakReference<String>(new String("hello"));//创建弱引用对象
+          System.out.println(sr.get());//可以打印出被引用的对象
+          System.gc();                //通知JVM的gc进行垃圾回收
+          System.out.println(sr.get());//打印出null，说明没有被引用的对象了，被引用的对象已经被回收了
+      }
+  }
+  ```
+
+  
+
+- **虚引用**： <font color="red">形同虚设，并不影响对象的生命周期，在任何时候都可能被垃圾回收器回收。</font>在java中用 <font color="red">java.lang.ref.PhantomReference</font>类表示。 <font color="orange">如果一个对象与虚引用关联，则跟没有引用与之关联一样</font>。虚引用主要用来<font color="voilet">跟踪对象被垃圾回收的活动。</font> 
+
+  <font color="orange">虚引用必须和引用队列关联使用</font>，当垃圾回收器准备回收一个对象时，如果发现它还有虚引用，就会把这个虚引用加入到与之关联的引用队列中。程序可以通过判断引用队列中是否已经加入了虚引用，来了解被引用的对象是否将要被垃圾回收。如果程序发现某个虚引用已经被加入到引用队列，那么就可以在所引用的对象的内存被回收之前采取必要的行动。
+
+  ```java
+  import java.lang.ref.PhantomReference;
+  import java.lang.ref.ReferenceQueue;
+   
+   
+  public class PhantomRef {
+      public static void main(String[] args) {
+          ReferenceQueue<String> queue = new ReferenceQueue<String>();//引用队列
+          PhantomReference<String> pr = new PhantomReference<String>(new String("hello"), queue);//创建虚引用对象
+          System.out.println(pr.get());//永远打印出null，因为本来虚引用就是形同虚设！
+      }
+  }
+  ```
+
+  
 
 #### 6、OSI七层模型，每一层做的是什么 （简单说说就好）
 
-#### 7、Java源代码了解吗？不了解  
+#### 7、Java源代码了解吗？
+
+说hashmap  
 
 #### 8、hashmap的put()操作的底层逻辑   不知道 微笑
 0.首先会判断数组是否为空或者长度是否为 0，为空或者长度为 0 就进行 resize 扩容操作。
