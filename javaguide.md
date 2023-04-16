@@ -367,7 +367,46 @@ new一个Thread然后调用该对象的start()，就会启动该线程并使线�
 
 # Spring
 
-## Spring中的设计模式
+### Spring中的设计模式
+
+### Spring、 Spring Boot和Spring MVC的联系和区别
+
+区别：
+
+- **Spring**是一个框架，包含多个功能模块，如Spring-Core（主要提供 IoC 依赖注入功能的支持，spring中其他模块的功能实现基本都需要依赖该模块） 
+
+- **Spring MVC**是Spring中的一个模块，主要赋予Spring快速构建MVC架构的Web程序的能力，MVC包括(model)、视图(view)、控制器(controller)，核心思想是通过将显示、业务逻辑、数据分离来组织代码。
+
+- **Spring Boot**是spring的完善和扩展，目的是简化配置，例如因为传统spring需要写大量xml等来配置依赖，比较麻烦，而springboot只需要通过一些注解；又如在测试的时候，在传统spring中，需要在maven依赖里添加Spring Test、JUnit 、Mockito、Hamcrest依赖，而在spring boot中只需要添加 spring-boot-starter-test 依赖项来自动包含这些库。
+
+  使用传统Spring创建web应用程序所需的最小依赖项：
+
+  ```xml
+  <dependency> 
+      <groupId>org.springframework</groupId> 
+      <artifactId>spring-web</artifactId> 
+      <version>5.1.0.RELEASE</version> 
+  </dependency> 
+  <dependency> 
+      <groupId>org.springframework</groupId> 
+      <artifactId>spring-webmvc</artifactId> 
+      <version>5.1.0.RELEASE</version> 
+  </dependency>
+  ```
+
+  使用Springboot只需一个依赖：
+
+  ```xml
+  <dependency> 
+      <groupId>org.springframework.boot</groupId> 
+      <artifactId>spring-boot-starter-web</artifactId> 
+      <version>2.0.6.RELEASE</version> 
+  </dependency>
+  ```
+
+联系：
+
+在构建一个web应用程序时，可以使用spring MVC提供的分层框架，然后通过springboot来简化配置
 
 
 

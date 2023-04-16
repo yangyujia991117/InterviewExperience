@@ -85,16 +85,212 @@ java中的hashmap：数组+链表，还有扩容等操作。
 
 可以用StringBuilder逐个添加字符串段，也可以用双指针法（不过注意要从后往前）
 
-#### 28.找出字符串中第一个匹配项的下标
+#### 28.找出字符串中第一个匹配项的下标<font color="red">KMP算法</font>
 
 **KMP算法——用来解决字符串匹配问题**
 
 前缀表：用于找到之前匹配过的内容
 
-- 前缀：一定包含首字母，不包含尾字母的所有子串
-- 后缀：一定包含尾字母，不包含首字母的所有字串
-- 前缀表存的就是字符串每一位的最长相等前后缀（前缀表用一个叫next的int[]数组来存）
-- 当模式串下标为i的字符不匹配了的时候，不是又从头开始匹配，而是得到前缀表里下标为i-1的字符对应的最长相等前后缀n，从模式串下标为n的字符开始匹配
+- 前缀：一定包含首字母，不包含尾字母的所有子串，例如字符串"abc"的前缀有a、ab
+
+- 后缀：一定包含尾字母，不包含首字母的所有字串，例如字符串"abc"的后缀有c、bc
+
+- **前缀表**存的就是字符串每一位的**最长相等前后缀**
+
+  最长相等前后缀指的是最长的相同前后缀的长度，例如字符串"a"的最长相等前后缀为0，"aaa"的最长相等前后缀为2(aa)，"aabaa"的最长相等前后缀为2（aa）
+
+- 前缀表用一个**叫next的int[]数组**来存，next[i]存的是**模式串**中**[0, i]这一段的最长相等前后缀**
+
+  例如模式串"aabaaf"的对应的前缀表为：[0,1,0,1,2,0]
+
+- 当模式串下标为i的字符不匹配了的时候，不是又从头开始匹配，而是<font color="red">得到前缀表里下标为**i-1**的字符对应的最长相等前后缀**next[i-1]**，从**模式串下标为next[i-1]的字符开始匹配**</font>
+
+  ![image-20230416121240639](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20230416121240639.png)
+
+代码如下：
+
+```java
+class Solution {
+    public int strStr(String haystack, String needle) {
+        //haystack是文本串, needle是模式串
+        if (needle.length() == 0) return 0;
+        int[] next = new int[needle.length()];
+        getNext(next, needle);//获得前缀表
+		
+        //根据前缀表进行匹配
+        int i=0,j=0;
+        while(i<haystack.length()&&j<needle.length()){
+            if(haystack.charAt(i)==needle.charAt(j)){
+                if(j==needle.length()-1){
+                    return i+1-needle.length();
+                }
+                i++;
+                j++;
+            }
+            else{
+                if(j==0){
+                    i++;
+                }
+                else {
+                    j = next[j - 1];
+                }
+            }
+        }
+        return -1;
+    }
+    //实现前缀表
+    private void getNext(int[] next, String s) {
+        int j = 0;
+        next[0] = 0;
+        for (int i = 1; i < s.length(); i++) {
+            while (j > 0 && s.charAt(j) != s.charAt(i)) 
+                j = next[j - 1];
+            if (s.charAt(j) == s.charAt(i)) 
+                j++;
+            next[i] = j; 
+        }
+    }
+}
+```
+
+
+
+## 五、栈与队列
+
+#### 232.用栈实现队列
+
+两个栈，一个输入栈stack1，一个输出栈stack2，入队列的时候一律放回stack1，出队列的时候如果stack2不为空，那直接从stack2弹出元素即可，如果stack2为空那将stack1的元素全部pop出来放进stack2里，再从stack2出栈。
+
+#### 225.用队列实现栈
+
+一个需要注意的点是java的Queue是一个接口，一般用LinkedList对Queue进行实例化
+
+**方法一：用两个队列来实现**
+
+<font color="red">和用栈实现队列时一个栈负责输入另一个栈负责输出不同，这里的两个队列一个负责输入和输出，另一个负责备份</font>
+
+放进元素的时候都放入queue1，要弹出元素的时候先把queue1的元素逐个pop出来，并且判断该元素是否为queue1的最后一个元素（即pop出来之后queue1是否为空），如果不是的话就把这个元素放进queue2，是的话直接弹出，然后把queue2里的元素再放回queue1中
+
+```java
+public void push(int x) {
+    queue1.offer(x);
+}
+
+public int pop() {
+    int res=-1;
+    while(!queue1.isEmpty()){
+        int x=queue1.poll();
+        if(!queue1.isEmpty()){
+            //该元素不是最后一个元素
+            queue2.offer(x);
+        }
+        else{
+            res=x;
+        }
+    }
+    while(!queue2.isEmpty()){
+        //queue2中元素放回去
+        queue1.offer(queue2.poll());
+    }
+    return res;
+}
+```
+
+**方法二：用一个队列来实现**
+
+只用一个队列的话就是不用再弄一个队列专门负责备份了，而是每次在弹出元素的时候将队列头部元素（除了最后一个元素外）重新添加到队列尾部，然后再把第一个元素弹出去
+
+```java
+public void push(int x) {
+    queue1.offer(x);
+}
+
+public int pop() {
+    int size=queue1.size();
+    int i=1;
+    while(true){
+        int x=queue1.poll();
+        if(i==size){//这是原本的最后一个元素
+            return x;
+        }
+        queue1.offer(x);
+        i++;
+    }
+}
+```
+
+#### 20.有效的括号
+
+<font color="red">靠右的左括号必须先闭合了才轮到它左边的左括号闭合
+
+普通做法：当遇到左括号的时候入栈，遇到右括号的时候出栈，如果这时候栈为空的那返回false，栈不为空但出栈的那个元素不是对应的左括号也返回false，到最后所有都处理完了但栈还是不为空也返回false
+
+简化做法：当遇到左括号的时候将对应的右括号入栈，遇到有括号的时候比较栈顶元素是否和该右括号相同，如果栈为空那返回false，栈不为空但栈顶元素不和右括号相同那也返回false，栈顶元素和该右括号相同的话pop，到最后所有都处理完了但栈还是不为空也返回false
+
+#### 1047.删除字符串的所有相邻重复项
+
+可以用stringbuider或栈，每次加入新的新的字符后就比较是否最后两个字符相同，相同的话就删除，删除之后再比较再删除……
+
+#### 150.逆波兰表达式求值
+
+用栈——遇到数字则入栈；遇到运算符则取出栈顶两个数字进行计算，并将结果压入栈中
+
+#### 239.滑动窗口最大值
+
+这道题用暴力解法很容易，下面仅考虑进阶要求：在O(N)时间复杂度解决此题
+
+使用**单调队列**的解法：构建一个队列，随着窗口的移动，队列也一进一出，每次移动之后队列都会更新一个“最大值”，可以直接取得这个最大值
+
+单调队列要满足以下要求：
+
+- **没有必要维护窗口里的所有元素，只需要维护<font color="red">有可能成为窗口里最大值的元素就可以了</font>,同时保证队列里的元素数值是由大到小的，**例如一个滑动窗口[2,3,5,1,4]，只维护{5,4}即可
+- 保证队列的<font color="red">出口元素是窗口里的最大元素</font>
+  1. pop(value)：如果窗口移除的元素value<font color="red">等于</font>单调队列的出口元素，那么<font color="red">队列出口弹出元素</font>，否则不用任何操作
+  2. push(value)：如果push的元素value<font color="red">大于</font>入口元素的数值，那么就<font color="red">将队列入口的元素弹出</font>，<font color="red">直到push元素的数值小于等于队列入口元素的数值为止</font>
+
+因此，实现该单调队列必须使用双端队列Deque，两边都能进出元素，Deque是一个接口，可以用LinkedList实例化它
+
+```java
+class MyQueue{
+    Deque<Integer> deque;
+    public MyQueue(){
+        deque=new LinkedList<>();
+    }
+    //弹出元素时,看要弹出的这个元素是否和队头元素相同，相同的话弹出队头元素，不同的话不做任何操作
+    public void pop(int x){
+        if(deque.peek()==x){
+            deque.pop();
+        }
+    }
+
+    //放进元素时，把单调队列里比该元素小的元素都删除
+    public void add(int x){
+        while(!deque.isEmpty()&&deque.getLast()<x){
+            deque.removeLast();
+        }
+        deque.addLast(x);
+    }
+    //最前面那个数就是最大的数
+    public int peek(){
+        return deque.peek();
+    }
+}
+```
+
+#### 347.前k个高频元素（map+小顶堆PriorityQueue）
+
+首先遍历数组，构建<元素，出现次数>的map，然后遍历map的每一项，将它放入小顶堆中，当小顶堆的元素个数大于k了，就判断根元素的出现次数是否小于该元素的出现次数，是的话就将根出队列（根永远是最小的那个元素，因此都是把出现次数最小的那个元素弹出来）再把新的元素放进去，不是的话不用理，最后小顶堆里剩下的就是前k个高频元素。
+
+**<font color="red">注意因为PriorityQueue默认是大顶堆，所以要改为小顶堆的话要重写它的接口</font>**
+
+```java
+PriorityQueue<int[]> priorityQueue=new PriorityQueue<>(new Comparator<int[]>() {
+            @Override
+            public int compare(int[] o1, int[] o2) {
+                return o1[1]-o2[1];//改为小顶堆
+            }
+        });
+```
 
 
 
@@ -155,9 +351,9 @@ public int findContentChildren(int[] g, int[] s) {//g是胃口，s是饼干尺�
 
 动态规划：dp[i]=max(dp[i-1]+nums[i], nums[i])，然后记录下max
 
-#### 122.买卖股票的最佳时机
+#### 122.买卖股票的最佳时机Ⅱ
 
-这里需要注意的是，当天是可以先把股票卖了再买入这个股票的，所以只要第i天比第i-1天大就把nums[i]-nums[i-1]加进去就可以了
+这里需要注意的是可以多次买卖哦股票，并且当天是可以先把股票卖了再买入这个股票的，所以只要第i天比第i-1天大就把nums[i]-nums[i-1]加进去就可以了
 
 #### 055.跳跃游戏
 
@@ -374,17 +570,195 @@ weight[i]≤j时，dp[i] [j]=max(dp[j], dp[j - weight[i]] + value[i])
 
 
 
-
-
 ## 股票问题
 
+核心思想：利用二维dp数组来记录多个状态
+
+需要注意初始化的问题：在i=0时，一律将当前持有股票设为-prices[0]，将当前未持有股票设为0
+
+#### 121.买卖股票的最大时机
+
+只能买卖股票一次
+
+这道题用贪心也可以做且更为简单，下面说说动规的解法
+
+构建一个二维数组dp[len] [2]
+
+- dp [i] [0]表示**第i天持有股票所得的最多现金**（注意：“持有”可以是之前就持有了也可以是这一天买入的，去最大的一个，所以<font color="red">dp [i] [0]=max(dp [i-1] [0], -prices[i])</font>
+- dp [i] [1]表示**第i天不持有股票所得的最多现金**（注意：“不持有”可以是之前就卖掉了也可以是今天刚卖出，取大的一个，所以<font color="red">dp [i] [1]=max(dp [i-1] [1], dp[i-1] [0]+prices[i])</font>
+- 初始化：dp [0] [0]=-prices[0], dp [0] [1]=0
+- 返回dp [len-1] [1]，因为按照题意，最后一天肯定是不持有股票所得的现金多
+
+#### 122.买卖股票的最佳时机Ⅱ
+
+可以买卖股票无限次买卖，并且同一天可以卖出之后再买入
+
+该题在贪心也讲过了，只要prices[i]>prices[i-1]就将prices[i]>prices[i-1]加进最终的利润里，下面讲一下动规的写法。
+
+dp [i] [0]和dp [i] [1]所表示的含义和前一道题一样，但因为可以多次买卖股票，所以递推公式有所区别：
+
+- dp [i] [0]=max(dp [i-1] [0], dp[i-1] [1]-prices[i])
+- dp [i] [1]=max(dp [i-1] [1], dp[i-1] [0]+prices[i])
+
+#### 714.买卖股票的最佳时机含手续费
+
+跟前一题相比，再卖出股票时交个手续费即可
+
+- dp [i] [0]=max(dp [i-1] [0], dp[i-1] [1]-prices[i])
+- dp [i] [1]=max(dp [i-1] [1], dp[i-1] [0]+prices[i]-手续费)
+
+#### 123.买卖股票的最佳时机Ⅲ
+
+<font color="red">最多只能买卖两次股票，可以一次都不买卖，也可以只买卖一次</font>
+
+构建一个二维数组dp[len] [5] 
+
+![image-20230413194413045](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20230413194413045.png)
+
+- dp [i] [0]：第i天还**没有操作**，就是这一天及其之前都没有买卖任何股票，dp [i] [0]=0
+- dp [i] [1]：第i天处于**第一次持有股票**状态所拥有的最大现金，注意不一定是一定在这一天买入，可以是之前就持有。dp [i] [1]=max(dp [i-1] [1], dp[i-1] [0]-prices[i])
+- dp [i] [2]：第i天处于**第一次不持有股票**状态所拥有的最大现金，注意不一定是一定在这一天卖出，可以是之前就不持有。dp [i] [2]=max(dp [i-1] [2], dp[i-1] [1]+prices[i])
+- dp [i] [3]：第i天处于**第二次持有股票**状态所拥有的最大现金，dp [i] [3]=max(dp [i-1] [3], dp[i-1] [2]-prices[i])
+- dp [i] [4]：第i天处于**第二次不持有股票**状态所拥有的最大现金，dp [i] [4]=max(dp [i-1] [4], dp[i-1] [3]+prices[i])
+
+初始化：dp [i] [0]=0，dp[0] [1]=-prices[0], dp[0] [2]=0, <font color="red">dp[0] [3]=-prices[0]</font>, dp[0] [4]=0，注意第0天第二次持有股票也要初始化为-prices[0]，因为第二次买入其实只依赖于第一次卖出的状态，其实相当于第0天第一次买入了，第一次卖出了，然后再买入一次（第二次买入），那么现在手头上没有现金，只要买入，现金就做相应的减少。
+
+返回max(dp [len-1] [0], dp [len-1] [1], dp [len-1] [2], dp [len-1] [3], dp[len-1] [4])
+
+#### 188.买卖股票的最佳时机Ⅳ
+
+<font color="red">最多可以买卖k次股票，和上一题的区别是**k不确定**</font>
+
+参考上一题，二维数组dp[i] [j]中第二维的个数是2k+1
+
+- j=0表示不操作，dp [i] [0]=0
+- j=1表示第一次持有，dp [i] [1]=max(dp [i-1] [1], dp[i-1] [0]-prices[i])
+- j=2表示第一次不持有，dp [i] [2]=max(dp [i-1] [2], dp[i-1] [1]+prices[i])
+- j=3表示第二次持有，dp [i] [3]=max(dp [i-1] [3], dp[i-1] [2]-prices[i])
+- j=4表示第二次不持有，dp [i] [4]=max(dp [i-1] [4], dp[i-1] [3]+prices[i])
+- ……
+- j=2k-1表示第k次持有，dp [i] [2k-1]=max(dp [i-1] [2k-1], dp[i-1] [2k-2]-prices[i])
+- j=2k表示第k次不持有，dp [i] [2k]=max(dp [i-1] [2k], dp[i-1] [2k-1]+prices[i])
+
+初始化：i=0时当j为奇数时，dp[0] [j]=-prices[0]，j为偶数时dp[0] [j]=0
+
+返回的也是最后一维中最大的那个数
+
+#### 309.最佳买卖股票时机含冷冻期
+
+可以无限次买卖，但<font color="red">卖出股票后会有一天的冷冻期，这一天内无法再买股票</font>
+
+也是定义二维数组dp [i] [j]表示第i天手上有的最多现金，j的含义如下：
+
+- j=0，这天<font color="red">持有股票</font>，可以是之前就持有的也可以是这天买入，这一天一定不能是冷冻期，就是说前一天一定不能卖出股票
+
+  dp [i] [0]=max(dp [i-1] [0], dp [i-1] [1]-prices[i],  dp [i-1] [3]-prices[i])
+
+- j=1，这天不持有股票且<font color="red">不在冷冻期，除了不可能是前一天卖出股票外，可能是前一天不持有股票的任何情况</font>
+
+  dp [i] [1]=max(dp [i-1] [1], dp [i-1] [3])
+
+- j=2，这天不持有股票且<font color="red">卖出了股票</font>dp[i] [2]=dp[i-1] [0]+prices[i]
+
+- j=3，这天不持有股票且<font color="red">在冷冻期，也就是前一天一定卖出了股票</font>，dp[i] [3]=dp [i-1] [2]
+
+初始化：dp [0] [0]=-prices[0], dp [0] [1]=0, dp [0] [2]=0, dp [0] [3]=0
 
 
 
 
-## 动态规划中的字符串操作问题
 
-#### 字符串最小编辑距离
+## 动态规划中的字符串子序列操作问题
+
+#### 300.最长递增子序列
+
+<font color="red">注意子序列和连续序列不同，子序列中间是可以断开的</font>
+
+dp[i]表示以nums[i]结尾的最长递增子序列的长度
+
+初始化：每个dp[i]初始都为1
+
+```java
+int res=1;
+for(int i=0;i<nums.length;i++){
+	dp[i]=1;
+	for(int j=0;j<i;j++){
+        if(nums[i]>nums[j]){
+            dp[i]=Math.max(dp[i],dp[j]+1);
+        }
+    }
+    res=Math.max(res,dp[i]);
+}
+return res;
+```
+
+#### 674.最长连续递增序列
+
+dp[i]表示以nums[i]结尾的最长连续递增序列的长度
+
+```java
+int res=1;
+dp[0]=1;
+for(int i=1;i<nums.length;i++){
+    dp[i]=1;
+    if(nums[i]>nums[i-1]){
+        dp[i]=dp[i-1]+1;
+    }
+    res=Math.max(res,dp[i]);
+}
+return res;
+```
+
+#### 718.最长重复子数组
+
+dp [i] [j]：以下标<font color="red"> i-1为结尾</font>的A和以下标<font color="red">j-1为结尾</font>的B的最长重复子数组长度
+
+i嵌套遍历j，当A[i-1]=B[j-1]时，dp[i] [j]=dp[i-1] [j-1]+1
+
+初始化：dp[i] [0]、dp[0] [j]初始化为0
+
+```java
+int res=0;
+for(int i=0;i<nums1.length;i++){
+    dp[i][0]=0;
+}
+for(int j=0;j<nums2.length;j++){
+    dp[0][j]=0;
+}
+for(int i=1;i<=nums1.length;i++){
+    for(int j=1;j<=nums2.length;j++){
+        if(nums1[i-1]==nums2[j-1]){
+            dp[i][j]=dp[i-1][j-1]+1;
+            res=Math.max(res,dp[i][j]);
+        }
+    }
+}
+return res;
+```
+
+#### 1143.最长公共子序列
+
+dp [i] [j]表示以下标i-1为结尾的A和以下标j-1为结尾的B的最长公共子序列的长度
+
+- 当A[i-1]=B[j-1]时，dp [i] [j]=dp [i-1] [j-1]+1
+- 当A[i-1]≠B[j-1]时，dp [i] [j]=max(dp [i-1] [j],dp [i] [j-1])
+
+初始化：dp[0] [j]=0, dp[i] [0]=0
+
+#### 583.两个字符串的删除操作
+
+第一种思路是利用上面那道题找出两个字符串的最长公共子序列，<font color="red">除了最长公共子序列以外的字符都要删除</font>
+
+第二种思路如下：
+
+dp[i] [j]：以i-1为结尾的字符串A，和以j-1位结尾的字符串B，想要达到相等，所需要删除元素的最少次数。
+
+- A[i-1]==B[j-1]时，dp[i] [j]=dp[i-1] [j-1]
+- A[i-1]不等于B[j-1]时，可以删A[i-1]、B[j-1]或两个都删，取操作数最少的那个，所以dp[i] [j]=min(dp[i-1] [j]+1, dp[i] [j-1]+1, dp[i-1] [j-1]+2)
+
+返回dp[word1.length()] [word2.length()]
+
+#### 72.字符串最小编辑距离
 
 给两个字符串A、B，每次可以插入/删除或修改一个字符，求经过多少次字符操作能够使两字符串变为相同
 
@@ -400,10 +774,12 @@ weight[i]≤j时，dp[i] [j]=max(dp[j], dp[j - weight[i]] + value[i])
 
   - B删除掉下标j-1的元素，那么就是以下标i-1为结尾的A与 下标j-2为结尾的B的最近编辑距离 再加上一个操作：edit\[i][j]=edit\[i][j-1]+1
 
-    <font color="red">【需要注意的是，字符串删除结尾字符其实相当于在另一个字符串结尾添加字符，例如 word1 = “ad” ，word2 = “a”，word1删除元素’d’ 和 word2添加一个元素’d’，变成word1=“a”, word2=“ad”， 最终的操作数是一样的】</font>
+    <font color="red">【需要注意的是，字符串删除结尾字符其实相当于在另一个字符串结尾添加字符，例如 word1 = “ad” ，word2 = “a”，word1删除元素’d’ 之后变为word1=“a”, word2=“a”，和 word2添加一个元素’d’，变成word1=“ad”, word2=“ad”， 最终的操作数是一样的】</font>
 
   - A替换A\[i-1]为B\[j-1]：edit\[i][j]=edit\[i-1][j-1]+1
 
+  综上有：
+  
   ```java
   if (A[i - 1] == B[j - 1]) {
       edit[i][j] = edit[i - 1][j - 1];

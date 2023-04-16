@@ -29,7 +29,7 @@
 - 系统集群化部署、负载均衡
 - 读写分离（主库写，从库读）+数据库分库分表+分布式数据库
 - 缓存：本地缓存、分布式缓存
-- 消息中间件
+- 消息中间件：可对不同业务的系统进行解耦
 - 应用拆分（微服务）：按业务拆分，减少耦合，分级部署
 - CDN（内容分发网络）：实时地根据网络流量、负载状况、到用户的距离、响应时间等综合信息将用户的请求重新导向离用户最近的服务节点上
 
@@ -37,19 +37,19 @@
 
 **按锁住的范围**
 
-- 表级锁：一锁就锁住<font color="red">整张表</font>，在并发写的情况下性能很差，是针对<font color="red">非索引字段</font>加的锁（如果update、delete语句后的where条件中字段没有命中唯一索引或索引失效，那就会加表级锁），加锁快，不会出现死锁
-- 行级锁：只对<font color="red">若干行</font>进行上锁，是针对索引字段加的锁，加锁开销大，加锁慢、会出现死锁
+- 表级锁：一锁就锁住<font color="red">整张表</font>，在并发写的情况下性能很差，是针对<font color="red">非索引字段</font>加的锁（如果update、delete语句后的where条件中字段没有命中唯一索引或索引失效，那就会加表级锁），<font color="red">加锁快，不会出现死锁</font>
+- 行级锁：只对<font color="red">若干行</font>进行上锁，是针对<font color="red">索引字段</font>加的锁，加锁开销大，<font color="red">加锁慢、会出现死锁</font>
 
 **按加锁模式（行级锁才有）**
 
-- 记录锁：对表中的一条条已存在的记录加锁，存在于唯一索引或主键中，如下面的句子，注意id必须是唯一索引列或主键列（主键列也是一种特殊的唯一索引列），否则会变成临键锁，并且查询语句必须为“=”这种精准匹配，不能为>< like，否则也会退化为临键锁
+- 记录锁：对表中的一条条已存在的记录加锁，存在于唯一索引或主键中，如下面的句子，注意id必须是唯一索引列或主键列（主键列也是一种特殊的唯一索引列），否则会变成临键锁，并且查询语句必须为“=”这种精准匹配，不能为>< like，否则也会便为临键锁
 
   ```mysql
-  SELECT * FROM `test` WHERE `id`=1 FOR UPDATE;
+  SELECT * FROM `test` WHERE `id`=1 FOR UPDATE;//注意：当后面有for update的时候为悲观锁
   ```
 
 - 间隙锁：锁住一个范围，不包括记录本身（开区间），存在于非唯一索引中
-- 临键锁：<font color="red">记录锁+间隙锁</font>锁定一个范围，包含记录本身（左开右闭，闭的就是一个记录），存在于非唯一索引中，可以解决幻读问题
+- 临键锁：<font color="red">记录锁+间隙锁</font>,锁定一个范围，包含记录本身（左开右闭，闭的就是一个记录），存在于非唯一索引中，可以解决幻读问题
 
 ​	InnoDB默认的隔离级别为可重复读，行锁默认用的是临键锁，但当操作索引是唯一索引或主键时，会降为记录锁
 
@@ -83,13 +83,13 @@ cache通常被分为多个行（通常为2的幂），每个行和主存中一�
 
 信息存在主存和cache中，确定它们的对应关系就需要借助地址映射（由硬件实现，<font color="red">将主存地址映射到对应的cache位置</font>，让编程人员可以直接通过主存地址来得到cache里的数据，从而感觉不到cache的存在）
 
-- 直接映射：<font color="red">每个主存块只能放到cache的一个特定行中</font>，一般用`内存块号%cache总行数`方式决定映射到哪一行
+- 直接映射：<font color="red">每个主存块只能放到cache的一个特定行中</font>，一般用`内存块号%cache总行数`的方式决定映射到哪一行
 
-  (实现简单、成本低；灵活性差：每个主存块只能放到特定行，冲突概率高，如果cache容量小的话会发生频繁替换)
+  (实现简单、成本低；灵活性差：每个主存块只能放到特定行，冲突概率高，如果cache容量小的话会发生频繁替换，适合容量大的cache)
 
 - 全相联映射：<font color="red">主存中任意一个块可以映射到cache中任意一行</font>。需要在cache中的一行增加标记部分，存放该行内容的主存块的块号。
 
-  （灵活：只要cache有空行就可以存新进来的块；效率不高：需要额外存主存块号；速度慢：每次访问cache都需要一个一个遍历找目标行）
+  （灵活：只要cache有空行就可以存新进来的块；效率不高：需要额外存主存块号；速度慢：每次访问cache都需要一个一个遍历找目标行，适合容量小的cache）
 
 - 组相联映射：全相联映射和直接映射的折中方案，将cache按相连行号划分为若干组，<font color="red">主存的每一块必须放到特定的组，但可以放到组内任意一行</font>。
 
@@ -131,8 +131,26 @@ node.js是一个基于Chrome JavaScript运行时建立的平台，它是对Googl
 
 大家好，我叫杨雨佳，本科和硕士均就读于南京大学软件学院，我成绩优秀，本科时位于年级前30%，研究生阶段位于年级前25%，我最擅长的编程语言是java，也使用过python、c#、mysql等其他语言，我做过很多项目，如web应用程序、游戏、微信小程序等。
 
-Hello everyone, my name is Yang Yujia. I have been studying at  Nanjing University Software Institute for both my undergraduate and master's degrees. 
+Hello everyone, my name is Yang Yujia. I have been studying in Nanjing University Software Institute for both my undergraduate and master's degrees. 
 
 I have excellent grades, ranking in the top 30% of my undergraduate studies and in the top 25% of my graduate studies. 
 
 My best programming language is Java, and I also have used python, mysql and other languages. I have worked on many projects such as some web applications, games, and WeChat mini programs.
+
+
+
+无领导讨论
+
+#### 登陆页面功能设计时，需求在设计过程中
+
+#### 用户名密码假设存在后端，如何保证安全性
+
+#### 排序算法
+
+#### 数据库加锁
+
+#### spring注入方式及其优缺点
+
+#### java中定时sheduleJob可以通过什么实现
+
+java JDK自带的Timer

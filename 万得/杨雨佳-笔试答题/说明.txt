@@ -1,0 +1,3 @@
+Main.java是源码，Main.class是可执行文件
+
+可以执行java Main后手动输入表达式，也可以java Main [示例文件路径]，读取示例文件中的表达式
