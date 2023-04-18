@@ -292,9 +292,420 @@ PriorityQueue<int[]> priorityQueue=new PriorityQueue<>(new Comparator<int[]>() {
         });
 ```
 
+## 六、二叉树
+
+**二叉树的种类**
+
+- 完全二叉树：除了最下面一层节点未填满外其余节点都填满了，并且最下面一层的节点都集中在该层最左边
+
+  ![](https://camo.githubusercontent.com/3df703d22acfefd0d37f9b4ef5983c87547410329b5903dd903b23d124e52766/68747470733a2f2f636f64652d7468696e6b696e672d313235333835353039332e66696c652e6d7971636c6f75642e636f6d2f706963732f32303230303932303232313633383930332e706e67)
+
+- 二叉搜索树（节点有数值的二叉树）：若某节点的左子树不为空，则左子树上所有节点的值都比它小；若右子树不为空，则右子树上所有节点的值都比它大
+- 平衡二叉搜索树（AVL树）：空树或者左右两个子树的高度差绝对值不超过1
+
+**二叉树的存储方式**
+
+数组存储：父节点的数组下标是i，则它的左孩子的数组下标为2i+1，右孩子的数组下标为2i+2
+
+链式存储：就是传统的定义TreeNode，然后通过指针连接到左右子树
+
+**二叉树的遍历方式**
+
+- 深度优先遍历：递归或迭代，一般用<font color="red">递归</font>
+- 广度优先遍历（层次遍历）：递归或迭代，一般用<font color="red">迭代+队列</font>
+
+#### 110.平衡二叉搜索树
+
+递归，看每个结点的左右子树的最大深度，返回的是以该节点为根的子树的最大深度
+
+```java
+class Solution {
+    boolean res;
+    public boolean isBalanced(TreeNode root) {
+        res=true;
+        dfs(root,0);
+        return res;
+    }
+    int dfs(TreeNode node,int len){
+        if(node==null){
+            return len;
+        }
+        int l=dfs(node.left,len+1),r=dfs(node.right,len+1);//l对应左子树的最大深度，r对应右子树的最大深度
+        if(Math.abs(l-r)>1){
+            res=false;
+        }
+        return Math.max(l,r);//返回以该节点为根的子树的最大深度
+    }
+}
+```
+
+#### 257.二叉树所有路径
+
+这道题需要注意的是在每次递归返回的时候要把list中新加的自己给删掉，因为要回溯，并且传递的list是一个引用
+
+#### 530.二叉搜索树的最小绝对差值
+
+这个最小绝对差值出现在根节点-其左子树的最右子节点，或者根节点-其右子树的最左子节点
+
+#### 501.二叉搜索树中的众数
+
+最简单的方法就是用一个额外的Hashmap<数字，出现次数>存各元素的出现次数，然后重写hashmap的sort根据其value进行排序，然后取最大的那几个
+
+**进阶做法：不使用hashmap求众数**
+
+可以利用二叉搜索树中序遍历的结果是一个有序数组这一特点，相同的数在进行中序遍历的时候一定也是相邻的
+
+#### 236.二叉树的最近公共祖先
+
+<font color="red">利用后序遍历</font>转化为看以该树为根的子树里是否同时含p和q节点 
+
+- 第一种情况：左、右子树均没有找到p或q（本题中不会出现这种情况）
+- 第二种情况：左子树能找到到右子树找不到，那应返回左子树的查找结果         
+- 第三种情况：右子树能找到但左子树找不到，那应返回右子树的查找结果         
+- 第四种情况：左右子树均能找到，那应直接返回这个节点
+
+#### 450.删除二叉搜索树中的节点
+
+递归函数的返回值就是该节点被改为什么节点，有以下五种情况：
+
+- 第一种情况：遍历到空节点了还没找到删除的节点，返回null
+
+- 第二-五种情况：找到了要删除的节点
+
+  - 第二种情况：该节点的左右子树均为空，直接返回null
+
+  - 第三种情况：该节点的左子树不为空，右子树为空，返回左子节点
+
+  - 第四种情况：该节点的右子树不为空，左子树为空，返回右子节点
+
+  - 第五种情况：该节点的左右子树均不为空，则将该节点的左子节点变为该节点的右子树的最左面节点的左子节点，返回该节点右子节点为新的根节点，如下图所示。
+
+    ![image-20230417193451543](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20230417193451543.png)
+
+#### 669.修剪二叉搜索树
+
+这道题要注意一种情况，就是虽然某个节点被删掉了但是它的左子节点或右子节点却被保留了下来
+
+#### 538.把二叉搜索树转为累加树
+
+所有节点从大往小遍历即可，也就是反中序遍历：右→自己→左
+
+## 六、回溯
+
+回溯通过递归进行，回溯函数指的就是**递归函数**
+
+回溯法可解决的问题：
+
+- 组合问题：N个数按一定规则找出k个数的集合（注意组合是**无序**的）
+- 切割问题：字符串按一定规则有几种切割方式
+- 子集问题：N个数的集合里有几个符合条件的子集
+- 排列问题：N个数按一定规则全排列有几种排列方式（注意排序是**有序**的）
+- 棋盘问题：N皇后、解数独等
+
+回溯函数代码模板<font color="red">一般回溯函数内部会有一个在本层内的迭代，每次迭代调用一次递归函数</font>：
+
+```java
+void backtracking(参数) {
+    if (终止条件) {
+        存放结果;
+        return;
+    }
+
+    for (选择：本层集合中元素（树中节点孩子的数量就是集合的大小）) {
+        处理节点;
+        backtracking(路径，选择列表); // 递归
+        回溯，撤销处理结果
+    }
+}
+
+```
+
+### 组合
+
+由于每个组合内的数字是无序的，因此回溯函数中的for i要从指定的start位置开始往后取，并且每次开启新的递归start相应的值都要i+1
+
+#### 77.组合
+
+这道题需要注意的两个点：
+
+- 回溯函数的迭代中每次调用一次递归之后path中新增的数都要remove掉
+- <font color="red">**res中新增的List必须要new一个新的,否则在后面会都变成空的！！！（因为传递的都是引用）**</font>
+- 一个剪枝：迭代中i <= n - (k - path.size()) + 1
+
+不用全局变量的写法：
+
+```java
+class Solution {
+    List<List<Integer>> result = new ArrayList<>();
+    public List<List<Integer>> combine(int n, int k) {
+        combineHelper(n, k, 1,new ArrayList<>());
+        return result;
+    }
+
+    private void combineHelper(int n, int k, int startIndex,List<Integer> path){
+        //终止条件
+        if (path.size() == k){
+            result.add(new ArrayList<>(path));//new一个新的List!!!!!
+            return;
+        }
+        for (int i = startIndex; i <= n - (k - path.size()) + 1; i++){
+            path.add(i);
+            combineHelper(n, k, i + 1,path);
+            path.remove(path.size()-1);
+        }
+    }
+}
+```
+
+使用全局变量的写法：
+
+```java
+class Solution {
+    List<List<Integer>> result = new ArrayList<>();
+    LinkedList<Integer> path = new LinkedList<>();
+    public List<List<Integer>> combine(int n, int k) {
+        combineHelper(n, k, 1);
+        return result;
+    }
+
+    private void combineHelper(int n, int k, int startIndex){
+        //终止条件
+        if (path.size() == k){
+            result.add(new ArrayList<>(path));//new一个新的List!!!!!
+            return;
+        }
+        for (int i = startIndex; i <= n - (k - path.size()) + 1; i++){
+            path.add(i);
+            combineHelper(n, k, i + 1);
+            path.removeLast();
+        }
+    }
+}
+```
+
+#### 216.组合总和Ⅲ
+
+和上一题类似，就是回溯终止条件有不同。
+
+#### 40.组合总和Ⅱ
+
+这里同一个组合中的元素可以重复，但是不能有相同的组合，因此要进行<font color="red">去重**【回溯问题中只要是数组中可能有重复元素的都要进行去重】**</font>
+
+回溯可以用树形图来表示，树中的同一层表示不同的组合，树枝表示同一组合中每一次选择元素的过程。因此这里的去重是要对<font color="red">同一层</font>的进行去重（也就是<font color="red">**在for循环内部相同的元素只能取一次**</font>）有两种方法：
+
+- 要先把数组<font color="red">排序</font>，然后回溯函数内部for语句中<font color="red">若i>start&&nums[i]==nums[i-1]则不能取nums[i]</font>，【只适用于不要求取得的集合中各元素保持初始的相对位置】
+- 回溯函数<font color="red">每一层</font>中弄一个hashmap或hashset标明这个元素在这一层是否被使用过【适用于所有情况】
+- 弄一个<font color="Red">全局数组used</font>表示对应那一位数字是否被取过，这种方法<u>不仅能判断这一层是否被取过，还能判断上一层是否被取过</u>，要注意的点是<font color="red">开启新的回溯返回之后used[i]要重新置为false</font>【适用于所有情况】
+
+### 切割
+
+切割问题可以看作是特殊的组合问题，组合问题是选了一个数之后下一次递归就从后面的数字选
+
+切割问题是在某处切了一刀之后下一次递归就在后面的位置切割
+
+#### 131.分割回文串
+
+包含两个部分：回溯切割+判断割出来的新部分是否为回文子串
+
+```java
+public class Solution {
+    List<List<String>> res=new ArrayList<>();
+    List<String> pre=new ArrayList<>();
+    String s;
+    public List<List<String>> partition(String s) {
+        this.s=s;
+        backTracking(0);
+        return res;
+    }
+    void backTracking(int start){
+        if(start>=s.length()){
+            res.add(new ArrayList<>(pre));
+            return;
+        }
+        for(int i=start;i<s.length();i++){
+            if(isPalindrome(start,i)){
+                pre.add(s.substring(start,i+1));
+                dfs(i+1);
+                pre.remove(pre.size()-1);
+            }
+        }
+    }
+    boolean isPalindrome(int start,int end){
+        int l=start,r=end;
+        while(l<r){
+            if(s.charAt(l)!=s.charAt(r)){
+                return false;
+            }
+            l++;
+            r--;
+        }
+        return true;
+    }
+}
+```
+
+#### 93.复原IP地址
+
+其实就是在一个字符串中任选三个位置做切割，将这个字符串切成合适的四段
+
+### 子集
+
+每个子集组合内部的数字都是无序的，因此递归函数也要有一个start表明开始的位置，每次开启新的递归也要i+1，比较特别的是不是遍历到树枝的末尾才将组合添加进去，而是递归的过程中就要将新的组合添加进去。
+
+<font color="red">另外不要忘了空集是任何集合的子集</font>
+
+#### 78.子集
+
+```java
+List<List<Integer>> res=new ArrayList<>();
+    List<Integer> pre=new ArrayList<>();
+    int[] nums;
+    public List<List<Integer>> subsets(int[] nums) {
+        this.nums=nums;
+        res.add(new ArrayList<>());
+        backTracking(0);
+        return res;
+    }
+    void backTracking(int start){
+        if(start>=nums.length){
+            return;
+        }
+        for(int i=start;i<nums.length;i++){
+            pre.add(nums[i]);
+            res.add(new ArrayList<>(pre));
+            backTracking(i+1);
+            pre.remove(pre.size()-1);
+        }
+    }
+ }
+```
+
+#### 90.子集Ⅱ
+
+和组合问题中的 40.组合总和Ⅱ 类似，由于数组中存在重复元素，也是要一开始进行数组的排序，然后回溯的时候进行<font color="red">层内去重</font>，具体方法是在同一层的for循环内相同的元素只能取一次
+
+```java
+public class subsetsWithDup_90 {
+    List<List<Integer>> res=new ArrayList<>();
+    List<Integer> pre=new ArrayList<>();
+    int[] nums;
+    public List<List<Integer>> subsetsWithDup(int[] nums) {
+        Arrays.sort(nums);
+        this.nums=nums;
+        res.add(new ArrayList<>());
+        backTracking(0);
+        return res;
+    }
+    void backTracking(int start){
+        if(start>=nums.length){
+            return;
+        }
+        for(int i=start;i<nums.length;i++){
+            if(i>start&&nums[i]==nums[i-1]){
+                continue;
+            }
+            pre.add(nums[i]);
+            res.add(new ArrayList<>(pre));
+            backTracking(i+1);
+            pre.remove(pre.size()-1);
+        }
+    }
+}
+
+```
+
+#### 491.递增子序列
+
+这道题因为要取子序列，<font color="Red">子序列是有相对顺序关系的</font>，因此注意<font color="red">不能对数组进行排序</font>，因此<font color="red">不能用看nums[i]是否等于nums[i-1]的方法进行去重</font>
+
+因此去重方法改为以下的：<font color="Red">在同一层内使用一个hashset或hashmap来标记是否取过这一数字</font>，取过了就不再取了
+
+### 排列
+
+排列中元素是有序的，也就是说[1,2]和[2,1]是两个不同的排序，取了一个后面的数还可能会取前面的数，因此<font color="red">回溯函数不能用start来表示起始位置</font>。在**同一个树枝**上只要满足取过的数不能再取即可，如果没有重复数字的话可以看<font color="red">pre里面没有这个数即可</font>，如果有重复数字的话<font color="red">同一层内要进行去重</font>
+
+#### 46.全排列
+
+这题数组中没有重复数字，直接看pre里有没有这个数即可
+
+```java
+class Solution {
+    List<List<Integer>> res=new ArrayList<>();
+    List<Integer> pre=new ArrayList<>();
+    int[] nums;
+    public List<List<Integer>> permute(int[] nums) {
+        this.nums=nums;
+        backTracking();
+        return res;
+    }
+    private void backTracking(){
+        if(pre.size()==nums.length){
+            res.add(new ArrayList<>(pre));
+            return;
+        }
+        for(int i=0;i<nums.length;i++){
+            if(!pre.contains(nums[i])){
+                //可以取这个数
+                pre.add(nums[i]);
+                backTracking();
+                pre.remove(pre.size()-1);
+            }
+        }
+    }
+}
+```
+
+#### 47.全排列Ⅱ
+
+这道题中数组里可能有重复的数字，因此要进行去重，去重做法也是同一层内相同的元素只能取一次
+
+这里使用全局used数组用于去重，不仅能知道这一层对应数字是否被取过，还能知道上一层是否被取过
+
+去重的时候有一个需要注意的点就是不仅要满足i>0、nums[i]=nums[i-1]，<font color="red">还要当used[i-1]为false的时候才能跳过i</font>，因为这时候nums[i-1]和nums[i]是这一层也可以取的，两数存在重复。如果used[i-1]为true，则这个数在上一层被取过了，这一层本来就不能取这个数，所以<font color="red">nums[i]和nums[i-1]**虽然相等但不存在重复**</font>
+
+```java
+class Solution {
+    List<List<Integer>> res=new ArrayList<>();
+    List<Integer> pre=new ArrayList<>();
+    boolean[] used;
+    int[] nums;
+    public List<List<Integer>> permuteUnique(int[] nums) {
+        Arrays.sort(nums);
+        this.nums=nums;
+        used=new boolean[nums.length];
+        backTracking();
+        return res;
+    }
+    void backTracking(){
+        if(pre.size()==nums.length){
+            res.add(new ArrayList<>(pre));
+            return;
+        }
+        for(int i=0;i<nums.length;i++){
+            if(i>0&&nums[i]==nums[i-1]&& used[i - 1] == false){
+                //去重
+                continue;
+            }
+            if(!used[i]) {
+                //不仅要保证去重，而且要保证同一根树枝不能取之前取过的数
+                used[i]=true;
+                pre.add(nums[i]);
+                backTracking();
+                pre.remove(pre.size() - 1);
+                used[i]=false;
+            }
+        }
+    }
+}
+```
+
+### 棋盘
+
+#### 332.重新安排行程
 
 
-## 贪心算法
+
+## 七、贪心算法
 
 - 本质：每一阶段选局部最优，从而达到全局最优
 - 什么时候用：感觉可以局部最优推出整体最优，而且想不到反例，那么就试一试贪心。

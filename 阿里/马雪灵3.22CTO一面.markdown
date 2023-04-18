@@ -144,8 +144,11 @@ mdate: 2023-03-27 11:17:11
 在插入键值对的时候调用一个名为 hash 的函数，
 1.取 hash：先判断 key 是否为 null，如果为 null 直接令 hash=0,否则取得 key.hashcode，然后计算 hash=hashcode^(hashcode>>>16）
 2.算这个元素应该放到哪个数组下标：<font color="red">**index=hash&(数组长度-1）**</font>，实际上是做了 hash%数组长度的操作，但因为 hashmap 自动把数组长度变为 2 的幂次方，所以可以将耗时较长的取模操作转换为简单的位运算，结果都一样。
-3.如果定位到的数组位置没有元素就直接插入。如果定位到的数组位置有元素就和要插入的 key 比较，如果 key 相同就直接覆盖，如果 key 不相同，就判断该位置的那个节点是否是一个树节点，如果是就调用<font color="red">e = ((TreeNode<K,V>)p).putTreeVal(this, tab, hash, key, value)</font>将元素添加进入。如果不是就<font color="red">遍历链表插入链表尾部</font>，并且判断链表长度是否大于 8，大于 8 的时候再判断数组长度是否大于 64，如果大于 64 则进行链表转红黑树的操作，否则调用 resize 对数组进行扩容。
-4.最后 size++<font color="red">（节点个数）</font>,如果大于threshold（数组长度*loadFactor） 的话就 resize 扩容。
+3.如果定位到的数组位置没有元素就直接放到数组对应位置。如果定位到的数组位置有元素就和要插入的 key 比较，如果 key 相同直接得到对应的节点e，如果 key 不相同，就判断该位置的那个节点是否是一个树节点，如果是就调用<font color="red">e = ((TreeNode<K,V>)p).putTreeVal(this, tab, hash, key, value)</font>，在putTreeVal方法里也会比较对应key是否已经存在，如果存在的话会直接返回已有的这个树节点，如果不存在的话会新插入一个节点并返回null。如果不是红黑树节点就<font color="red">遍历链表，在遍历链表的过程中找是否有相同key的元素，有的话直接得到这个节点e，如果遍历到链表尾部还没找到key相同的节点的话就在链表尾部插入新节点</font>，并且插入之后判断链表长度是否<font color="orange">大于 8</font>，大于 8 的时候再判断数组长度是否<font color="orange">大于等于 64</font>，如果大于等于 64 则进行链表转红黑树的操作，否则调用 resize 对数组进行扩容。<font color="green">以上过程如果找到了key相同的节点那么e=那个节点，没找到的话会插入新节点且e=null</font>
+
+4.<font color="red">根据e是否为null判断上一阶段是否找到了key相同的节点</font>，如果e不为null的话说明找到了key相同的节点，改变这个节点的value为新值，如果e=null的话表明上一阶段插入了新节点，不管
+
+5.最后 size++<font color="red">（节点个数）</font>,如果<font color="orange">大于threshold（数组长度*loadFactor） </font>的话就 resize 扩容。
 注意：扩容的时候是将数组扩容为原来的两倍，然后要遍历每个节点，利用每个节点的 hash &新数组长度-1 得到新的数组下标
 
 #### 9、hashmap扩容的机制
