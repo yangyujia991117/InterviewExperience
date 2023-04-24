@@ -703,7 +703,73 @@ class Solution {
 
 #### 332.重新安排行程
 
+几个步骤：
 
+1.首先按照每个航班的目的地将航班排序，保证最终返回的结果一定是字典序最小的，然后用一个boolean[] used数组表示是否用了这个航班
+
+2.回溯函数的返回值是boolean，表明这条路径是否行得通，函数内部for循环里遍历整个航班链表，比较该航班的起始地是否和pre中最后一个地方一样，并且这一航班没有被使用过，如果是的话，调用回溯函数并得到返回值，如果返回值是true则返回true，如果遍历完最后一个航班但返回值都是false的话就返回false
+
+3.回溯结束条件：pre长度=航班链表长度+1，直接令结果res=pre，然后返回true
+
+```java
+public class findItinerary_332 {
+    List<String> pre=new ArrayList<>();
+    List<String> res=new ArrayList<>();
+    boolean[] used;
+    List<List<String>> tickets;
+    public List<String> findItinerary(List<List<String>> tickets) {
+        Collections.sort(tickets, new Comparator<List<String>>() {
+            @Override
+            public int compare(List<String> o1, List<String> o2) {
+                return o1.get(1).compareTo(o2.get(1));
+            }
+        });
+        this.tickets=tickets;
+        used=new boolean[tickets.size()];
+        pre.add("JFK");
+        backTracking();
+        return res;
+    }
+    boolean backTracking(){
+        if(pre.size()==tickets.size()+1){
+            res=new ArrayList<>(pre);
+            return true;
+        }
+        String prePlace=pre.get(pre.size()-1);//上一个地方
+        for(int i=0;i< tickets.size();i++){
+            if(!used[i]&&prePlace.equals(tickets.get(i).get(0))){//上一个地方是这趟航班的起点
+                used[i]=true;
+                pre.add(tickets.get(i).get(1));
+                if(backTracking()){
+                    return true;
+                }
+                pre.remove(pre.size()-1);
+                used[i]=false;
+            }
+        }
+        return false;
+    }
+}
+
+```
+
+#### 51.N皇后
+
+皇后的约束条件：不能同行、同列、同斜线，
+
+利用这个约束条件来回溯搜索整个棋盘，每一次回溯是遍历新的一行，直到遍历到最后一行
+
+在回溯函数内遍历整的这一行，遍历到每一格都判断这格是否能够放皇后，能的话再放并开启新的回溯，
+
+#### 37.解数独
+
+规则： 数字 1-9 在每一行只能出现一次。 数字 1-9 在每一列只能出现一次。 数字 1-9 在每一个以粗实线分隔的 3x3 宫内只能出现一次
+
+这道题和上一道题的不同之处：这道题遍历的时候要<font color="red">三层遍历</font>，上一题每一行放一个皇后就可以了，但这一题每个空格都需要放数字，所以前两层是遍历每一个格子<font color="red">找到第一个现在为空可以放数字的格子</font>，第三层是遍历数字1-9看这一格能不能放这个数字
+
+注意回溯函数的返回值是boolean，也就是<font color="red">当找到一种可能了就要返回，而不是要找到所有的可能</font>，只要是<font color="red">**只需要找到一种可能性的返回值都是boolean**</font>
+
+这里要注意的是每一次回溯都是<font color="red">找到第一个没放有数字的格子，这个格子只要数字1-9都不合适那就立马返回false（因为这个数独是一个一个格子按顺序放数字，如果下一格无论放什么格子都不合适那这个数独就是错误的，找不到解决数独问题的解），而不是等到遍历完了所有的格子才返回false</font>
 
 ## 七、贪心算法
 
